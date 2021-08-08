@@ -2,6 +2,7 @@ import gradio as gr
 import cv2
 import numpy as np
 import mediapipe as mp
+from gradio.mix import Parallel, Series
 
 mp_drawing = mp.solutions.drawing_utils
 mp_face_mesh = mp.solutions.face_mesh
@@ -49,7 +50,7 @@ def facial_landmarks(img):
         if results.multi_face_landmarks:
             for face_landmarks in results.multi_face_landmarks:
                 mp_drawing.draw_landmarks(
-                    img=img,
+                    image=img,
                     landmark_list=face_landmarks,
                     connections=mp_face_mesh.FACE_CONNECTIONS,
                     landmark_drawing_spec=drawing_spec,
@@ -118,6 +119,13 @@ def face_segmentation(image):
             bg_image = np.zeros(image.shape, dtype=np.uint8)
             bg_image[:] = BG_COLOR
             output_image = np.where(condition, image, bg_image)
-
-webcam = gr.inputs.Image(shape=(200, 200), source="webcam")
-gr.Interface(fn=facial_landmarks, inputs=webcam, outputs="image").launch()
+        
+        return output_image
+# webcam = gr.inputs.Image(shape=(200, 200), source="webcam")
+# face_landmarks = gr.Interface(fn=facial_landmarks, inputs=webcam, outputs="image")
+# face_seg = gr.Interface(fn=face_segmentation, inputs=webcam, outputs="image")
+# full_landmarks = gr.Interface(fn=holistic_landmarks, inputs=webcam, outputs="image")
+# gr.Interface(fn=facial_landmarks, inputs=webcam, outputs="image").launch()
+# Parallel(face_landmarks, face_seg, full_landmarks).launch()
+# https://github.com/gradio-app/gradio/issues/174
+gr.Interface([facial_landmarks, face_segmentation, holistic_landmarks], live=True, inputs=gr.inputs.Image(source="webcam"), outputs=gr.outputs.Image()).launch()
